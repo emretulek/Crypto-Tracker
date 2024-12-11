@@ -1,0 +1,192 @@
+﻿<Window x:Class="CryptoTracker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dd="urn:gong-wpf-dragdrop"
+        SizeToContent="Height"
+        FontSize="{Binding Settings.FontSize}"
+        Title="Crypto Tracker" Height="600" Width="400">
+
+    <Border>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <!-- Search Box -->
+            <Label Height="25" Cursor="SizeAll"></Label>
+            <Grid Grid.Row="1">
+                <TextBox x:Name="SearchBox"  Padding="15 10"
+                     CaretBrush="{Binding Settings.FontColor}" 
+                     Foreground="{Binding Settings.FontColor}"    
+                     Background="Transparent" BorderThickness="0" 
+                     PreviewKeyDown="SearchBox_DownArrow" 
+                     TextChanged="SearchBox_TextChanged"/>
+                <Label x:Name="PlaceHolder" Padding="15 10"
+                       Foreground="{Binding Settings.FontColor}"
+                       Opacity="0.2" IsHitTestVisible="False">🔍 Search Crypto</Label>
+            </Grid>
+            <!-- Autocomplete -->
+            <Canvas Canvas.ZIndex="100" x:Name="SearchPanel"  Visibility="Collapsed" Grid.Row="2">
+                <ListBox x:Name="SearchResults"
+                         Width="{Binding ActualWidth, ElementName=SearchPanel}"
+                         HorizontalContentAlignment="Stretch"
+                         BorderThickness="0" 
+                         Foreground="{Binding DataContext.Settings.HeaderFontColor, RelativeSource={RelativeSource AncestorType=Window}}"
+                         Background="{Binding DataContext.Settings.Background, RelativeSource={RelativeSource AncestorType=Window}}" 
+                         ItemsSource="{Binding CoinPairsFiltered}" 
+                         MouseUp="SearchResults_MouseLeftButtonUp"
+                         KeyDown="SearchResults_KeyDown">       
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border  Background="{Binding DataContext.Settings.DividerColor, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <DockPanel>
+                                    <TextBlock Padding="5">
+                                        <Run Text="{Binding Symbol}"/>
+                                    </TextBlock>
+                                    <TextBlock Padding="5" HorizontalAlignment="Right">
+                                        <Run Text="{Binding BaseAsset}"/>
+                                        <Run Text=" / "/>
+                                        <Run Text="{Binding QuoteAsset}"/>  
+                                    </TextBlock>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Canvas>
+
+            <!-- DataGrid -->
+            <DataGrid x:Name="CryptoDataGrid" GridLinesVisibility="None" Grid.Row="3" 
+                      IsReadOnly="True" 
+                      AutoGenerateColumns="False" 
+                      HeadersVisibility="Column"
+                      Focusable="False"
+                      Background="Transparent"
+                      BorderThickness="0"
+                      dd:DragDrop.IsDragSource="True"
+                      dd:DragDrop.IsDropTarget="True"
+                      Drop="DataGrid_Drop"
+                      Sorting="DataGrid_Sorting"
+                      VirtualizingStackPanel.IsVirtualizing="False"
+                      ItemsSource="{Binding CoinPairGridRows}">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0 0 0 1"/>
+                        <Setter Property="BorderBrush" Value="{Binding DataContext.Settings.DividerColor, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <EventSetter Event="MouseEnter" Handler="DataGridRow_MouseEnter" />
+                        <EventSetter Event="MouseLeave" Handler="DataGridRow_MouseLeave" />
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="{Binding DataContext.Settings.Background, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <Setter Property="Foreground" Value="{Binding DataContext.Settings.HeaderFontColor, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <Setter Property="MinHeight" Value="35"/>
+                        <Setter Property="Padding" Value="10 5"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="{Binding DataContext.Settings.FontColor, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Margin" Value="5"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                        <Style.Triggers>
+                            <!-- Değişim yok (Gri) -->
+                            <DataTrigger Binding="{Binding Status}" Value="0">
+                                <Setter Property="Foreground" Value="{Binding DataContext.Settings.FontColor, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </DataTrigger>
+
+                            <!-- Pozitif değişim (Yeşil) -->
+                            <DataTrigger Binding="{Binding Status}" Value="1">
+                                <Setter Property="Foreground" Value="#26a69a"/>
+                            </DataTrigger>
+
+                            <!-- Negatif değişim (Kırmızı) -->
+                            <DataTrigger Binding="{Binding Status}" Value="-1">
+                                <Setter Property="Foreground" Value="#f23645"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="⇵" SortMemberPath="ID" SortDirection="Ascending">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding DataContext.Settings.DividerColor, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        BorderThickness="1" 
+                                        BorderBrush="{Binding DataContext.Settings.DividerColor, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        CornerRadius="50" 
+                                        Width="26" Height="26"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                    <Image Source="{Binding Image}">
+                                        <Image.Clip>
+                                            <EllipseGeometry RadiusX="12" RadiusY="12" Center="12,12"/>
+                                        </Image.Clip>
+                                    </Image>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    
+                    
+                    <DataGridTextColumn Header="Symbol" Binding="{Binding Symbol}" Width="2*">
+                        <DataGridTextColumn.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="{Binding DataContext.Settings.FontColor, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Margin" Value="10"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="1">
+                                        <Setter Property="Foreground" Value="{Binding DataContext.Settings.FontColor, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="-1">
+                                        <Setter Property="Foreground" Value="{Binding DataContext.Settings.FontColor, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Header="Price" Binding="{Binding PriceString}" SortMemberPath="Price" Width="2*">
+               
+                    </DataGridTextColumn>
+
+
+                    <DataGridTextColumn Header="Change" Binding="{Binding ChangeString}" SortMemberPath="Change" Width="2*">
+                     
+                    </DataGridTextColumn>
+                    
+                    
+                    <DataGridTemplateColumn  Header="Chng (%)" SortMemberPath="ChangePercent" Width="2*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid HorizontalAlignment="Stretch">
+                                    <TextBlock Text="{Binding DisplayPercentage}"
+                                               Padding="5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    <Label Content="❌"  Tag="DeleteButton"
+                                        Foreground="{Binding DataContext.Settings.HeaderFontColor, RelativeSource={RelativeSource AncestorType=Window}}" BorderThickness="0" Visibility="Collapsed"
+                                        VerticalAlignment="Center" HorizontalAlignment="Right" 
+                                        Padding="5" Cursor="Hand" MouseUp="DeleteDataGridRow">
+                                    </Label>
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </Border>
+</Window>

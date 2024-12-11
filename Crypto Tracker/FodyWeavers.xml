@@ -1,0 +1,9 @@
+﻿<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
+  <Costura>
+    <IncludeAssemblies>
+      GongSolutions.WPF.DragDrop
+      WebSocket4Net
+      SuperSocket.ClientEngine
+    </IncludeAssemblies>
+  </Costura>
+</Weavers>
